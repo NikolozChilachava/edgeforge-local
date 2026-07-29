@@ -1,0 +1,61 @@
+﻿# Virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Testing and code-quality caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# IDE files
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Windows files
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# Datasets
+data/
+datasets/
+
+# Machine-learning files
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+
+# Generated EdgeForge files
+artifacts/models/*
+!artifacts/models/.gitkeep
+
+artifacts/results/*
+!artifacts/results/.gitkeep
+
+artifacts/reports/*
+!artifacts/reports/.gitkeep
+
+artifacts/system/*
+!artifacts/system/.gitkeep
