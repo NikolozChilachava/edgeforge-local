@@ -5,6 +5,7 @@ from edgeforge_core.benchmarking.config import BenchmarkConfig
 from edgeforge_core.benchmarking.runner import collect_latency_measurements
 from edgeforge_core.benchmarking.statistics import build_benchmark_result
 from edgeforge_core.models.tiny_classifier_adapter import TinyClassifierAdapter
+from edgeforge_core.runtimes.pytorch_runtime import PyTorchRuntime
 
 
 def test_build_benchmark_result_calculates_statistics() -> None:
@@ -42,6 +43,7 @@ def test_collect_latency_measurements_returns_expected_count() -> None:
     adapter = TinyClassifierAdapter()
 
     device = torch.device("cpu")
+    runtime = PyTorchRuntime(device)
 
     model = adapter.load_model(device)
 
@@ -57,9 +59,9 @@ def test_collect_latency_measurements_returns_expected_count() -> None:
     )
 
     latencies = collect_latency_measurements(
+        runtime=runtime,
         model=model,
         inputs=inputs,
-        device=device,
         config=config,
     )
 

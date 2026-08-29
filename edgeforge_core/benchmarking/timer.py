@@ -1,28 +1,28 @@
 from __future__ import annotations
 
 import time
+from typing import Any
 
-import torch
-from torch import nn
+from edgeforge_core.runtimes.base import RuntimeAdapter
 
 
 def measure_inference_ms(
-    model: nn.Module,
-    inputs: torch.Tensor,
-    device: torch.device,
+    runtime: RuntimeAdapter,
+    model: Any,
+    inputs: Any,
 ) -> float:
-    """Measure one model inference and return latency in milliseconds."""
+    """Measure one runtime inference in milliseconds."""
 
-    if device.type == "cuda":
-        torch.cuda.synchronize(device)
+    runtime.synchronize()
 
     start_time = time.perf_counter()
 
-    with torch.no_grad():
-        model(inputs)
+    runtime.run(
+        model=model,
+        inputs=inputs,
+    )
 
-    if device.type == "cuda":
-        torch.cuda.synchronize(device)
+    runtime.synchronize()
 
     end_time = time.perf_counter()
 
