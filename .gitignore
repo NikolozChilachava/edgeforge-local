@@ -59,3 +59,9 @@ artifacts/reports/*
 
 artifacts/system/*
 !artifacts/system/.gitkeep
+
+# Generated calibration data
+artifacts/calibration_data/
+
+# Local error logs
+kernel.errors.txt
