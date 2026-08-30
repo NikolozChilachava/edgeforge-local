@@ -65,3 +65,6 @@ artifacts/calibration_data/
 
 # Local error logs
 kernel.errors.txt
+
+# Local environment variables
+.env
