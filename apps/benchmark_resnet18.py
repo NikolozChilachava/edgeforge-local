@@ -5,6 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
+import openvino as ov
 import torch
 
 from edgeforge_core.benchmarking.config import BenchmarkConfig
@@ -13,6 +14,7 @@ from edgeforge_core.benchmarking.runner import collect_latency_measurements
 from edgeforge_core.benchmarking.statistics import build_benchmark_result
 from edgeforge_core.models.resnet18_adapter import ResNet18Adapter
 from edgeforge_core.runtimes.onnx_runtime import ONNXRuntime
+from edgeforge_core.runtimes.openvino_runtime import OpenVINORuntime
 from edgeforge_core.runtimes.pytorch_runtime import PyTorchRuntime
 
 ONNX_PATH = Path("artifacts/models/resnet18.onnx")
@@ -25,7 +27,6 @@ def benchmark_pytorch(
     config: BenchmarkConfig,
 ) -> BenchmarkResult:
     runtime = PyTorchRuntime(device)
-
     model = adapter.load_model(device)
 
     inputs = adapter.create_sample_input(
@@ -50,6 +51,22 @@ def benchmark_pytorch(
     )
 
 
+def create_numpy_inputs(
+    adapter: ResNet18Adapter,
+    config: BenchmarkConfig,
+) -> np.ndarray:
+    device = torch.device("cpu")
+
+    inputs = adapter.create_sample_input(
+        batch_size=config.batch_size,
+        device=device,
+    )
+
+    inputs = adapter.preprocess(inputs)
+
+    return inputs.numpy().astype(np.float32)
+
+
 def benchmark_onnx(
     adapter: ResNet18Adapter,
     provider: str,
@@ -58,21 +75,37 @@ def benchmark_onnx(
     runtime = ONNXRuntime(provider)
     model = runtime.load_model(ONNX_PATH)
 
-    cpu_device = torch.device("cpu")
-
-    inputs = adapter.create_sample_input(
-        batch_size=config.batch_size,
-        device=cpu_device,
-    )
-
-    inputs = adapter.preprocess(inputs)
-
-    numpy_inputs = inputs.numpy().astype(np.float32)
+    inputs = create_numpy_inputs(adapter, config)
 
     latencies = collect_latency_measurements(
         runtime=runtime,
         model=model,
-        inputs=numpy_inputs,
+        inputs=inputs,
+        config=config,
+    )
+
+    return build_benchmark_result(
+        model_id=adapter.model_id,
+        device=runtime.runtime_id,
+        batch_size=config.batch_size,
+        latencies_ms=latencies,
+    )
+
+
+def benchmark_openvino(
+    adapter: ResNet18Adapter,
+    device: str,
+    config: BenchmarkConfig,
+) -> BenchmarkResult:
+    runtime = OpenVINORuntime(device)
+    model = runtime.load_model(ONNX_PATH)
+
+    inputs = create_numpy_inputs(adapter, config)
+
+    latencies = collect_latency_measurements(
+        runtime=runtime,
+        model=model,
+        inputs=inputs,
         config=config,
     )
 
@@ -87,7 +120,7 @@ def benchmark_onnx(
 def print_results(results: list[BenchmarkResult]) -> None:
     print()
     print(
-        f"{'Runtime':<18}"
+        f"{'Runtime':<20}"
         f"{'Mean ms':>12}"
         f"{'Median ms':>14}"
         f"{'Min ms':>12}"
@@ -95,11 +128,11 @@ def print_results(results: list[BenchmarkResult]) -> None:
         f"{'Items/sec':>14}"
     )
 
-    print("-" * 82)
+    print("-" * 84)
 
     for result in results:
         print(
-            f"{result.device:<18}"
+            f"{result.device:<20}"
             f"{result.mean_ms:>12.3f}"
             f"{result.median_ms:>14.3f}"
             f"{result.min_ms:>12.3f}"
@@ -114,10 +147,11 @@ def save_results(results: list[BenchmarkResult]) -> None:
         exist_ok=True,
     )
 
-    data = [asdict(result) for result in results]
-
     RESULT_PATH.write_text(
-        json.dumps(data, indent=2),
+        json.dumps(
+            [asdict(result) for result in results],
+            indent=2,
+        ),
         encoding="utf-8",
     )
 
@@ -155,7 +189,25 @@ def main() -> None:
             "CUDAExecutionProvider",
             config,
         ),
+        benchmark_openvino(
+            adapter,
+            "CPU",
+            config,
+        ),
     ]
+
+    openvino_devices = ov.Core().available_devices
+
+    gpu_devices = [device for device in openvino_devices if device.startswith("GPU")]
+
+    if gpu_devices:
+        results.append(
+            benchmark_openvino(
+                adapter,
+                gpu_devices[0],
+                config,
+            )
+        )
 
     print_results(results)
     save_results(results)
