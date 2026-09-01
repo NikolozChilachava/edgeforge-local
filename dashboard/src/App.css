@@ -199,6 +199,21 @@ nav {
   width: 100%;
 }
 
+.empty-state {
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  color: #748095;
+  font-size: 13px;
+  text-align: center;
+}
+
+.empty-table {
+  color: #748095;
+  padding: 30px 12px;
+  text-align: center;
+}
+
 .table-wrapper {
   overflow-x: auto;
 }

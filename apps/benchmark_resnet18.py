@@ -5,6 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
+import onnxruntime as ort  # type: ignore[import-untyped]
 import openvino as ov  # type: ignore[import-untyped]
 import torch
 
@@ -160,6 +161,12 @@ def save_results(results: list[BenchmarkResult]) -> None:
 
 
 def main() -> None:
+    if not ONNX_PATH.exists():
+        raise FileNotFoundError(
+            "ResNet-18 ONNX model not found. "
+            "Run 'python -m apps.export_resnet18_onnx' first."
+        )
+
     adapter = ResNet18Adapter()
 
     config = BenchmarkConfig(
@@ -174,19 +181,9 @@ def main() -> None:
             torch.device("cpu"),
             config,
         ),
-        benchmark_pytorch(
-            adapter,
-            torch.device("cuda"),
-            config,
-        ),
         benchmark_onnx(
             adapter,
             "CPUExecutionProvider",
-            config,
-        ),
-        benchmark_onnx(
-            adapter,
-            "CUDAExecutionProvider",
             config,
         ),
         benchmark_openvino(
@@ -195,6 +192,24 @@ def main() -> None:
             config,
         ),
     ]
+
+    if torch.cuda.is_available():
+        results.append(
+            benchmark_pytorch(
+                adapter,
+                torch.device("cuda"),
+                config,
+            )
+        )
+
+        if "CUDAExecutionProvider" in ort.get_available_providers():
+            results.append(
+                benchmark_onnx(
+                    adapter,
+                    "CUDAExecutionProvider",
+                    config,
+                )
+            )
 
     openvino_devices = ov.Core().available_devices
 

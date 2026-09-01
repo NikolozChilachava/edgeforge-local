@@ -65,6 +65,29 @@ async function fetchJson<T>(path: string, label: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function fetchOptionalJson<T>(
+  path: string,
+  label: string,
+): Promise<T | null> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`);
+  } catch {
+    throw new Error(`Cannot reach the EdgeForge API at ${API_URL}.`);
+  }
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`${label} request failed (${response.status}).`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 function formatRuntime(runtime: string) {
   return runtime
     .replaceAll("_", " ")
@@ -91,11 +114,11 @@ function App() {
           systemData,
         ] = await Promise.all([
           fetchJson<Benchmark[]>("/benchmarks", "Benchmarks"),
-          fetchJson<Benchmark>(
+          fetchOptionalJson<Benchmark>(
             "/benchmarks/best/resnet18_imagenet",
             "Best benchmark",
           ),
-          fetchJson<Optimization>(
+          fetchOptionalJson<Optimization>(
             "/optimization/resnet18",
             "Optimization report",
           ),
@@ -194,7 +217,7 @@ function App() {
 
         <div className="sidebar-footer">
           <span className="status-dot" />
-          PostgreSQL connected
+          API connected
         </div>
       </aside>
 
@@ -387,31 +410,38 @@ function App() {
           </div>
 
           <div className="chart-container">
-            <ResponsiveContainer
-              width="100%"
-              height={320}
-            >
-              <BarChart data={chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
+            {chartData.length > 0 ? (
+              <ResponsiveContainer
+                width="100%"
+                height={320}
+              >
+                <BarChart data={chartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
 
-                <XAxis
-                  dataKey="runtime"
-                  tick={{ fontSize: 11 }}
-                />
+                  <XAxis
+                    dataKey="runtime"
+                    tick={{ fontSize: 11 }}
+                  />
 
-                <YAxis />
+                  <YAxis />
 
-                <Tooltip />
+                  <Tooltip />
 
-                <Bar
-                  dataKey="latency"
-                  radius={[7, 7, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+                  <Bar
+                    dataKey="latency"
+                    radius={[7, 7, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="empty-state">
+                No benchmark data yet. Run the benchmark workflow,
+                then refresh this page.
+              </div>
+            )}
           </div>
         </section>
 
@@ -440,45 +470,53 @@ function App() {
               </thead>
 
               <tbody>
-                {latestByRuntime.map((benchmark) => (
-                  <tr key={benchmark.runtime_id}>
-                    <td className="runtime-cell">
-                      {formatRuntime(
-                        benchmark.runtime_id,
-                      )}
-
-                      {best?.runtime_id ===
-                        benchmark.runtime_id && (
-                          <span className="recommended">
-                            BEST
-                          </span>
-                        )}
-                    </td>
-
-                    <td>
-                      {benchmark.mean_ms.toFixed(2)} ms
-                    </td>
-
-                    <td>
-                      {benchmark.median_ms.toFixed(2)} ms
-                    </td>
-
-                    <td>
-                      {benchmark.min_ms.toFixed(2)} ms
-                    </td>
-
-                    <td>
-                      {benchmark.max_ms.toFixed(2)} ms
-                    </td>
-
-                    <td>
-                      {benchmark.throughput_items_per_second.toFixed(
-                        1,
-                      )}{" "}
-                      /s
+                {latestByRuntime.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="empty-table">
+                      No results have been published yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  latestByRuntime.map((benchmark) => (
+                    <tr key={benchmark.runtime_id}>
+                      <td className="runtime-cell">
+                        {formatRuntime(
+                          benchmark.runtime_id,
+                        )}
+
+                        {best?.runtime_id ===
+                          benchmark.runtime_id && (
+                            <span className="recommended">
+                              BEST
+                            </span>
+                          )}
+                      </td>
+
+                      <td>
+                        {benchmark.mean_ms.toFixed(2)} ms
+                      </td>
+
+                      <td>
+                        {benchmark.median_ms.toFixed(2)} ms
+                      </td>
+
+                      <td>
+                        {benchmark.min_ms.toFixed(2)} ms
+                      </td>
+
+                      <td>
+                        {benchmark.max_ms.toFixed(2)} ms
+                      </td>
+
+                      <td>
+                        {benchmark.throughput_items_per_second.toFixed(
+                          1,
+                        )}{" "}
+                        /s
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
