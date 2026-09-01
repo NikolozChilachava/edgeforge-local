@@ -1,7 +1,13 @@
+import json
+import platform
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
+import psutil
+import torch
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -22,6 +28,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 DatabaseSession = Annotated[
     Session,
@@ -78,6 +96,40 @@ def list_benchmarks(
     statement = select(BenchmarkRecord).order_by(BenchmarkRecord.created_at.desc())
 
     return list(db.scalars(statement).all())
+
+
+@app.get("/system")
+def system_information() -> dict[str, object]:
+    memory = psutil.virtual_memory()
+
+    gpu_name: str | None = None
+
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+
+    return {
+        "operating_system": platform.system(),
+        "os_version": platform.release(),
+        "processor": platform.processor(),
+        "cpu_cores": psutil.cpu_count(logical=False),
+        "logical_cpus": psutil.cpu_count(logical=True),
+        "memory_gb": round(memory.total / (1024**3), 1),
+        "cuda_available": torch.cuda.is_available(),
+        "gpu": gpu_name,
+    }
+
+
+@app.get("/optimization/resnet18")
+def resnet18_optimization() -> dict[str, object]:
+    result_path = Path("artifacts/results/resnet18_int8_optimization.json")
+
+    if not result_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Optimization report not found.",
+        )
+
+    return json.loads(result_path.read_text(encoding="utf-8"))
 
 
 @app.get(

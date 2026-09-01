@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edgeforge-local"
+version = "0.1.0"
+description = "Local ML deployment benchmarking and optimization platform"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.141,<1",
+    "nncf>=3.3,<4",
+    "numpy>=2.4,<3",
+    "onnx>=1.22,<2",
+    "onnxruntime-gpu>=1.26,<2",
+    "openvino>=2026.2,<2027",
+    "psutil>=7.2,<8",
+    "psycopg[binary]>=3.3,<4",
+    "pydantic>=2.13,<3",
+    "pydantic-settings>=2.15,<3",
+    "sqlalchemy>=2.0,<3",
+    "torch>=2.11,<3",
+    "torchvision>=0.26,<1",
+    "uvicorn[standard]>=0.52,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx2>=2.12,<3",
+    "mypy>=2.3,<3",
+    "pytest>=9.1,<10",
+    "ruff>=0.16,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["apps*", "edgeforge_api*", "edgeforge_core*", "worker*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+extend-exclude = ["artifacts", "dashboard"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["error"]
+
+[tool.mypy]
+python_version = "3.12"
+exclude = ["^dashboard/", "^artifacts/"]
+show_error_codes = true
+pretty = true

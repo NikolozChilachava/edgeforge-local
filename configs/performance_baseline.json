@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "model_id": "resnet18_imagenet",
+  "batch_size": 1,
+  "threshold_percent": 15.0,
+  "environment": {
+    "operating_system": "Windows 11",
+    "cpu_cores": 12,
+    "logical_cpus": 16,
+    "memory_gb": 31.7,
+    "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU"
+  },
+  "runtimes": {
+    "pytorch_cpu": 38.27734,
+    "pytorch_cuda": 2.549315,
+    "onnx_cpu": 10.258605,
+    "onnx_cuda": 1.87967,
+    "openvino_cpu": 15.18469,
+    "openvino_gpu_0": 33.24464
+  }
+}

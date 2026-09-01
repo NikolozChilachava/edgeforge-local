@@ -5,7 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
-import openvino as ov
+import openvino as ov  # type: ignore[import-untyped]
 import torch
 
 from edgeforge_core.benchmarking.config import BenchmarkConfig

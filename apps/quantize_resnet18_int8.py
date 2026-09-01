@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import nncf
+import nncf  # type: ignore[import-untyped]
 import openvino as ov  # type: ignore[import-untyped]
-from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10
-from torchvision.models import ResNet18_Weights
+from torch.utils.data import DataLoader  # type: ignore[import-untyped]
+from torchvision.datasets import CIFAR10  # type: ignore[import-untyped]
+from torchvision.models import ResNet18_Weights  # type: ignore[import-untyped]
 
 ONNX_PATH = Path("artifacts/models/resnet18.onnx")
 INT8_PATH = Path("artifacts/models/resnet18_int8.xml")

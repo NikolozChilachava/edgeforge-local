@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -95,6 +96,33 @@ def main() -> None:
     speedup = fp32_result.mean_ms / int8_result.mean_ms
     size_reduction = (1 - int8_size / fp32_size) * 100
 
+    optimization_result = {
+        "model_id": "resnet18_imagenet",
+        "fp32_latency_ms": fp32_result.mean_ms,
+        "int8_latency_ms": int8_result.mean_ms,
+        "fp32_throughput": fp32_result.throughput_items_per_second,
+        "int8_throughput": int8_result.throughput_items_per_second,
+        "fp32_size_mb": fp32_size,
+        "int8_size_mb": int8_size,
+        "speedup": speedup,
+        "size_reduction_percent": size_reduction,
+    }
+
+    result_path = Path("artifacts/results/resnet18_int8_optimization.json")
+
+    result_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    result_path.write_text(
+        json.dumps(
+            optimization_result,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
     print()
     print("OpenVINO ResNet-18")
     print("-" * 55)
@@ -118,6 +146,9 @@ def main() -> None:
     print(f"INT8 size: {int8_size:.2f} MB")
     print(f"INT8 speedup: {speedup:.2f}x")
     print(f"Size reduction: {size_reduction:.1f}%")
+
+    print()
+    print("Saved optimization report:", result_path)
 
 
 if __name__ == "__main__":
