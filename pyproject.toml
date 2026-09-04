@@ -12,7 +12,9 @@ dependencies = [
     "fastapi>=0.141,<1",
     "nncf>=3.3,<4",
     "numpy>=2.4,<3",
+    "nvidia-ml-py>=12,<14",
     "onnx>=1.22,<2",
+    "onnxscript>=0.5,<1",
     "onnxruntime-gpu>=1.26,<2",
     "openvino>=2026.2,<2027",
     "psutil>=7.2,<8",
@@ -27,10 +29,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "anyio>=4.10,<4.15",
     "httpx2>=2.12,<3",
     "mypy>=2.3,<3",
     "pytest>=9.1,<10",
     "ruff>=0.16,<1",
+    "types-psutil>=7.2,<8",
 ]
 
 [tool.setuptools.packages.find]
