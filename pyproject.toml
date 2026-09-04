@@ -28,6 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "anyio>=4.10,<4.15",
     "httpx2>=2.12,<3",
     "mypy>=2.3,<3",
     "pytest>=9.1,<10",
