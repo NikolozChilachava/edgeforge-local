@@ -60,8 +60,9 @@ def test_onnx_cpu_runtime_runs_model(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(
-    "CUDAExecutionProvider" not in ort.get_available_providers(),
-    reason="ONNX Runtime CUDA provider is not available.",
+    not torch.cuda.is_available()
+    or "CUDAExecutionProvider" not in ort.get_available_providers(),
+    reason="A usable CUDA GPU is not available for ONNX Runtime.",
 )
 def test_onnx_cuda_runtime_runs_model(tmp_path: Path) -> None:
     model_path = create_test_onnx_model(tmp_path)
